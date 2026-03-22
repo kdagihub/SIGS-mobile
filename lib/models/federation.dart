@@ -1,3 +1,5 @@
+import '../core/constants.dart';
+
 class Federation {
   final String? code;
   final String? sigle;
@@ -12,7 +14,7 @@ class Federation {
       code: json['code'] as String?,
       sigle: json['sigle'] as String?,
       libelle: json['libelle'] as String?,
-      logo: json['logo'] as String?,
+      logo: AppConstants.toAbsoluteUrl(json['logo'] as String?),
     );
   }
 

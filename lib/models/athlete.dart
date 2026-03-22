@@ -1,3 +1,4 @@
+import '../core/constants.dart';
 import 'federation.dart';
 import 'club.dart';
 
@@ -31,7 +32,7 @@ class Athlete {
       msNius: json['ms_nius'] as String? ?? '',
       nom: json['nom'] as String? ?? '',
       prenoms: json['prenoms'] as String? ?? '',
-      photo: json['photo'] as String?,
+      photo: AppConstants.toAbsoluteUrl(json['photo'] as String?),
       dateNaissance: json['date_naissance'] as String?,
       sexe: json['sexe'] as String?,
       nationalite: json['nationalite'] as String?,

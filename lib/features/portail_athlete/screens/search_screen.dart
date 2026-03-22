@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme.dart';
 import '../../../providers/athlete_provider.dart';
+import '../../../providers/recent_searches_provider.dart';
 import '../widgets/search_form.dart';
 
 class SearchScreen extends ConsumerWidget {
@@ -12,10 +13,18 @@ class SearchScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(athleteProvider);
+    final recentSearches = ref.watch(recentSearchesProvider);
 
     ref.listen<AthleteSearchState>(athleteProvider, (previous, next) {
-      if (next.status == AthleteSearchStatus.success) {
-        context.go('/result');
+      if (next.status == AthleteSearchStatus.success && next.result != null) {
+        final notifier = ref.read(recentSearchesProvider.notifier);
+        notifier.addSearch(
+          next.lastSearchedNius ?? '',
+          athleteName: next.result!.athlete.fullName,
+        );
+        Future.microtask(() {
+          if (context.mounted) context.go('/result');
+        });
       }
     });
 
@@ -53,8 +62,14 @@ class SearchScreen extends ConsumerWidget {
                   errorMessage: state.status == AthleteSearchStatus.error
                       ? state.errorMessage
                       : null,
+                  recentSearches: recentSearches,
                   onSearch: (msNius) {
                     ref.read(athleteProvider.notifier).searchByMsNius(msNius);
+                  },
+                  onRemoveRecent: (msNius) {
+                    ref
+                        .read(recentSearchesProvider.notifier)
+                        .removeSearch(msNius);
                   },
                 ),
                 const SizedBox(height: 48),

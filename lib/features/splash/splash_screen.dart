@@ -55,18 +55,9 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 160,
                   height: 160,
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'SIGS',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFFF97316),
-                        letterSpacing: 4,
-                      ),
-                ),
                 const SizedBox(height: 8),
                 Text(
-                  'Système Intégré de Gestion du Sport',
+                  'Système d\'Information et de Gestion du Sport',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey.shade600,
                       ),
