@@ -82,7 +82,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
             ref.read(athleteProvider.notifier).reset();
-            context.go('/search');
+            context.pop();
           },
         ),
         title: Row(

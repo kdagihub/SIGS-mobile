@@ -23,7 +23,7 @@ class SearchScreen extends ConsumerWidget {
           athleteName: next.result!.athlete.fullName,
         );
         Future.microtask(() {
-          if (context.mounted) context.go('/result');
+          if (context.mounted) context.push('/result');
         });
       }
     });
