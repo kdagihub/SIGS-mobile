@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class SplashScreen extends StatefulWidget {
+import '../../providers/auth_provider.dart';
+
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _fadeIn;
@@ -27,9 +30,20 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) context.go('/search');
-    });
+    _navigateAfterSplash();
+  }
+
+  Future<void> _navigateAfterSplash() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+
+    final authState = ref.read(authProvider);
+
+    if (authState.status == AuthStatus.authenticated) {
+      context.go('/admin/dashboard');
+    } else {
+      context.go('/role-selection');
+    }
   }
 
   @override
@@ -55,18 +69,9 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 160,
                   height: 160,
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'SIGS',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFFF97316),
-                        letterSpacing: 4,
-                      ),
-                ),
                 const SizedBox(height: 8),
                 Text(
-                  'Système Intégré de Gestion du Sport',
+                  'Système d\'Information et de Gestion du Sport',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey.shade600,
                       ),

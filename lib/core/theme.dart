@@ -87,7 +87,12 @@ class SigsTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surfaceGrey,
-        labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
+        labelStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: primaryBlue,
+        ),
+        iconTheme: const IconThemeData(color: primaryBlue, size: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),

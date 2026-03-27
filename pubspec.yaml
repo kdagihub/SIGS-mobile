@@ -1,5 +1,5 @@
 name: sigs_mobile
-description: "SIGS - Application mobile du Système Intégré de Gestion du Sport"
+description: "SIGS - Application mobile du Système d'Information et de Gestion du Sport"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.6.1
   dio: ^5.7.0
@@ -17,13 +19,35 @@ dependencies:
   open_filex: ^4.5.0
   path_provider: ^2.1.5
   google_fonts: ^6.2.1
-  web: ^1.1.1
+  shared_preferences: ^2.5.4
+  fl_chart: ^1.2.0
+  syncfusion_flutter_datagrid: ^33.1.44
+  flutter_form_builder: ^10.2.0
+  form_builder_validators: ^11.2.0
+  intl: ^0.20.1
+  image_picker: ^1.2.1
+  file_picker: ^10.3.10
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_native_splash: ^2.4.3
+  flutter_launcher_icons: ^0.14.4
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#FFFFFF"
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#FFFFFF"
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/logo_sigs.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/logo_sigs.png"
 
 flutter:
   uses-material-design: true

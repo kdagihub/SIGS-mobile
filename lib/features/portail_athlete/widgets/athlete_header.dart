@@ -99,8 +99,15 @@ class AthleteHeader extends StatelessWidget {
 
   Widget _chip(BuildContext context, IconData icon, String label) {
     return Chip(
-      avatar: Icon(icon, size: 16),
-      label: Text(label),
+      avatar: Icon(icon, size: 16, color: SigsTheme.primaryBlue),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: SigsTheme.primaryBlue,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       visualDensity: VisualDensity.compact,
     );
   }
