@@ -8,6 +8,7 @@ import '../features/portail_athlete/screens/result_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
 import '../features/admin/screens/admin_dashboard_screen.dart';
+import '../features/profile/screens/profile_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
@@ -43,6 +44,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/admin/dashboard',
       builder: (context, state) => const AdminDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

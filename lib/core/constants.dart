@@ -4,7 +4,7 @@ class AppConstants {
   AppConstants._();
 
   static String get apiBaseUrl {
-    if (kReleaseMode) return 'https://ms-sigs.org/api';
+    if (kReleaseMode) return 'https://admin.ms-sigs.org/api';
     if (kIsWeb) return 'http://localhost:8000/api';
     // Android emulator uses 10.0.2.2 to reach host localhost
     return 'http://10.0.2.2:8000/api';
@@ -19,7 +19,7 @@ class AppConstants {
   static const Duration receiveTimeout = Duration(seconds: 30);
 
   static String get baseUrl {
-    if (kReleaseMode) return 'https://ms-sigs.org';
+    if (kReleaseMode) return 'https://admin.ms-sigs.org';
     if (kIsWeb) return 'http://localhost:8000';
     return 'http://10.0.2.2:8000';
   }

@@ -69,6 +69,49 @@ class AuthRepository {
     return AuthUser.fromJson(response.data as Map<String, dynamic>);
   }
 
+  /// PUT /api/auth/me/ — update personal info
+  Future<AuthUser> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+    String? contact,
+  }) async {
+    final data = <String, dynamic>{
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+    };
+    if (contact != null && contact.isNotEmpty) {
+      data['contact'] = contact;
+    }
+    final response = await _dio.put('/auth/me/', data: data);
+    return AuthUser.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// POST /api/auth/update-entity-info/ — update entity info
+  Future<AuthUser> updateEntityInfo(Map<String, dynamic> entityData) async {
+    final response = await _dio.post(
+      '/auth/update-entity-info/',
+      data: entityData,
+    );
+    return AuthUser.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// POST /api/auth/change-password/ — change password with PIN
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+    String? pin,
+  }) async {
+    await _dio.post('/auth/change-password/', data: {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'confirm_new_password': confirmNewPassword,
+      if (pin != null) 'pin': pin,
+    });
+  }
+
   /// Restore session from stored tokens (app startup)
   ({AuthUser? user, String? accessToken}) restoreSession() {
     final access = _prefs.getString(_accessKey);
@@ -107,6 +150,38 @@ class AuthRepository {
   }
 
   bool get hasStoredTokens => _prefs.getString(_accessKey) != null;
+
+  /// GET /api/auth/security-pin/ — PIN status
+  Future<Map<String, dynamic>> getPinStatus() async {
+    final response = await _dio.get('/auth/security-pin/');
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// POST /api/auth/security-pin/ — create PIN
+  Future<void> createPin({
+    required String newPin,
+    required String confirmPin,
+    required String currentPassword,
+  }) async {
+    await _dio.post('/auth/security-pin/', data: {
+      'new_pin': newPin,
+      'confirm_pin': confirmPin,
+      'current_password': currentPassword,
+    });
+  }
+
+  /// PUT /api/auth/security-pin/ — update PIN
+  Future<void> updatePin({
+    required String currentPin,
+    required String newPin,
+    required String confirmPin,
+  }) async {
+    await _dio.put('/auth/security-pin/', data: {
+      'current_pin': currentPin,
+      'new_pin': newPin,
+      'confirm_pin': confirmPin,
+    });
+  }
 
   /// Verify reset credentials for entity users (email + entity_code + pin)
   Future<({String token, int expiresIn})> verifyResetCredentials({

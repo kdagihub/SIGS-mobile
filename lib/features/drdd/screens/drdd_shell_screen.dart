@@ -8,6 +8,10 @@ import '../../../core/dialogs.dart';
 import '../../../core/theme.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/drdd_provider.dart';
+import '../../profile/screens/profile_screen.dart';
+import '../tabs/associations_tab.dart';
+import '../tabs/evenements_tab.dart';
+import '../tabs/infrastructures_tab.dart';
 import 'drdd_overview_screen.dart';
 import 'drdd_territoire_screen.dart';
 
@@ -84,21 +88,9 @@ class _DrddShellScreenState extends ConsumerState<DrddShellScreen> {
           children: [
             const DrddOverviewScreen(),
             const DrddTerritoireScreen(),
-            _PlaceholderTab(
-              icon: Icons.stadium_rounded,
-              label: 'Infrastructures',
-              description: 'Infrastructures sportives',
-            ),
-            _PlaceholderTab(
-              icon: Icons.groups_rounded,
-              label: 'Associations',
-              description: 'Associations sportives',
-            ),
-            _PlaceholderTab(
-              icon: Icons.event_rounded,
-              label: 'Événements',
-              description: 'Événements sportifs',
-            ),
+            const InfrastructuresTab(),
+            const AssociationsTab(),
+            const EvenementsTab(),
           ],
         ),
         bottomNavigationBar: Container(
@@ -204,7 +196,20 @@ class _UserMenuButton extends StatelessWidget {
       onSelected: (value) {
         switch (value) {
           case 'profile':
-            _showProfileSheet(context);
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              useSafeArea: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => SizedBox(
+                height: MediaQuery.of(context).size.height * 0.92,
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: const ProfileScreen(),
+                ),
+              ),
+            );
           case 'logout':
             onLogout();
         }
@@ -306,107 +311,6 @@ class _UserMenuButton extends StatelessWidget {
     );
   }
 
-  void _showProfileSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            CircleAvatar(
-              radius: 36,
-              backgroundColor: SigsTheme.primaryBlue,
-              child: Text(
-                userInitials(fullName),
-                style: GoogleFonts.inter(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              fullName,
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: SigsTheme.primaryBlue,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              email,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
-            ),
-            if (group != null) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: SigsTheme.primaryOrange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  group!,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: SigsTheme.primaryOrange,
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: SigsTheme.surfaceGrey,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline_rounded,
-                      size: 20, color: Colors.grey.shade500),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'La modification du profil sera bientôt disponible.',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _TabDef {
@@ -415,75 +319,3 @@ class _TabDef {
   const _TabDef(this.label, this.icon);
 }
 
-class _PlaceholderTab extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String description;
-
-  const _PlaceholderTab({
-    required this.icon,
-    required this.label,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: SigsTheme.primaryOrange.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                icon,
-                size: 40,
-                color: SigsTheme.primaryOrange.withValues(alpha: 0.5),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: SigsTheme.primaryBlue,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: SigsTheme.warningAmber.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Bientôt disponible',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: SigsTheme.warningAmber,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

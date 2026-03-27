@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.6.1
   dio: ^5.7.0
@@ -23,6 +25,8 @@ dependencies:
   flutter_form_builder: ^10.2.0
   form_builder_validators: ^11.2.0
   intl: ^0.20.1
+  image_picker: ^1.2.1
+  file_picker: ^10.3.10
 
 dev_dependencies:
   flutter_test:

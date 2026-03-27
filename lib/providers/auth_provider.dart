@@ -107,6 +107,77 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Re-fetch full profile from /auth/me/ and update state
+  Future<AuthUser> refreshProfile() async {
+    final user = await _repo.fetchProfile();
+    state = state.copyWith(user: user);
+    return user;
+  }
+
+  /// Update personal info (first_name, last_name, email, contact)
+  Future<AuthUser> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+    String? contact,
+  }) async {
+    final user = await _repo.updateProfile(
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      contact: contact,
+    );
+    state = state.copyWith(user: user);
+    return user;
+  }
+
+  /// Update entity info (DR, DD, federation, etc.)
+  Future<AuthUser> updateEntityInfo(Map<String, dynamic> entityData) async {
+    final user = await _repo.updateEntityInfo(entityData);
+    state = state.copyWith(user: user);
+    return user;
+  }
+
+  /// Get PIN status
+  Future<Map<String, dynamic>> getPinStatus() => _repo.getPinStatus();
+
+  /// Create security PIN
+  Future<void> createPin({
+    required String newPin,
+    required String confirmPin,
+    required String currentPassword,
+  }) => _repo.createPin(
+        newPin: newPin,
+        confirmPin: confirmPin,
+        currentPassword: currentPassword,
+      );
+
+  /// Update security PIN
+  Future<void> updatePin({
+    required String currentPin,
+    required String newPin,
+    required String confirmPin,
+  }) => _repo.updatePin(
+        currentPin: currentPin,
+        newPin: newPin,
+        confirmPin: confirmPin,
+      );
+
+  /// Change password with PIN
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+    String? pin,
+  }) async {
+    await _repo.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      confirmNewPassword: confirmNewPassword,
+      pin: pin,
+    );
+  }
+
   Future<void> logout() async {
     await _repo.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);

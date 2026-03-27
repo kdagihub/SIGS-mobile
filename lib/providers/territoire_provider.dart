@@ -147,6 +147,8 @@ class LocalitesState {
   final int page;
   final String searchQuery;
   final String? filterDd;
+  final bool selectionMode;
+  final Set<String> selectedCodes;
 
   const LocalitesState({
     this.loading = false,
@@ -159,6 +161,8 @@ class LocalitesState {
     this.page = 1,
     this.searchQuery = '',
     this.filterDd,
+    this.selectionMode = false,
+    this.selectedCodes = const {},
   });
 
   LocalitesState copyWith({
@@ -173,6 +177,8 @@ class LocalitesState {
     String? searchQuery,
     String? filterDd,
     bool clearFilterDd = false,
+    bool? selectionMode,
+    Set<String>? selectedCodes,
   }) =>
       LocalitesState(
         loading: loading ?? this.loading,
@@ -185,6 +191,8 @@ class LocalitesState {
         page: page ?? this.page,
         searchQuery: searchQuery ?? this.searchQuery,
         filterDd: clearFilterDd ? null : (filterDd ?? this.filterDd),
+        selectionMode: selectionMode ?? this.selectionMode,
+        selectedCodes: selectedCodes ?? this.selectedCodes,
       );
 }
 
@@ -257,6 +265,49 @@ class LocalitesNotifier extends StateNotifier<LocalitesState> {
   Future<String?> delete(String code) async {
     try {
       await _repo.deleteLocalite(code);
+      await Future.wait([load(page: state.page), loadStats()]);
+      return null;
+    } catch (e) {
+      return _extractError(e);
+    }
+  }
+
+  // --------------- Sélection multiple ---------------
+
+  void toggleSelectionMode() {
+    if (state.selectionMode) {
+      state = state.copyWith(selectionMode: false, selectedCodes: {});
+    } else {
+      state = state.copyWith(selectionMode: true);
+    }
+  }
+
+  void toggleSelect(String code) {
+    final s = Set<String>.from(state.selectedCodes);
+    if (s.contains(code)) {
+      s.remove(code);
+    } else {
+      s.add(code);
+    }
+    state = state.copyWith(selectedCodes: s);
+  }
+
+  void selectAll() {
+    state = state.copyWith(
+      selectedCodes: state.records.map((r) => r.code).toSet(),
+    );
+  }
+
+  void deselectAll() {
+    state = state.copyWith(selectedCodes: {});
+  }
+
+  Future<String?> bulkDelete() async {
+    final codes = state.selectedCodes.toList();
+    if (codes.isEmpty) return 'Aucune sélection';
+    try {
+      await Future.wait(codes.map((c) => _repo.deleteLocalite(c)));
+      state = state.copyWith(selectionMode: false, selectedCodes: {});
       await Future.wait([load(page: state.page), loadStats()]);
       return null;
     } catch (e) {

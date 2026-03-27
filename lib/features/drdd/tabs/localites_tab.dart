@@ -85,7 +85,7 @@ class _LocalitesTabState extends ConsumerState<LocalitesTab>
     HapticFeedback.mediumImpact();
     final err = await ref.read(localitesProvider.notifier).delete(loc.code);
     if (!mounted) return;
-    _showSnack(err == null ? 'Supprimé avec succès' : err, err != null);
+    _showSnack(err ?? 'Supprimé avec succès', err != null);
   }
 
   void _showSnack(String msg, bool isError) {
@@ -124,6 +124,24 @@ class _LocalitesTabState extends ConsumerState<LocalitesTab>
                   ),
                 ),
               ),
+              IconButton(
+                onPressed: () => ref
+                    .read(localitesProvider.notifier)
+                    .toggleSelectionMode(),
+                icon: Icon(
+                  st.selectionMode
+                      ? Icons.close_rounded
+                      : Icons.checklist_rounded,
+                  color: st.selectionMode
+                      ? SigsTheme.dangerRed
+                      : SigsTheme.primaryBlue,
+                  size: 22,
+                ),
+                tooltip: st.selectionMode
+                    ? 'Quitter la sélection'
+                    : 'Sélection multiple',
+              ),
+              const SizedBox(width: 4),
               SizedBox(
                 height: 36,
                 child: FilledButton.icon(
@@ -173,6 +191,14 @@ class _LocalitesTabState extends ConsumerState<LocalitesTab>
           ),
           const SizedBox(height: 12),
 
+          // ── Barre de sélection ──
+          if (st.selectionMode)
+            _LocaliteSelectionBar(
+              state: st,
+              ref: ref,
+              parentContext: context,
+            ),
+
           // ── Liste ──
           if (st.loading && st.records.isEmpty)
             _ListShimmer()
@@ -181,6 +207,17 @@ class _LocalitesTabState extends ConsumerState<LocalitesTab>
           else
             ...st.records.map((loc) => _LocaliteCard(
                   loc: loc,
+                  selectionMode: st.selectionMode,
+                  isSelected: st.selectedCodes.contains(loc.code),
+                  onToggleSelect: () => ref
+                      .read(localitesProvider.notifier)
+                      .toggleSelect(loc.code),
+                  onLongPress: () {
+                    HapticFeedback.mediumImpact();
+                    final n = ref.read(localitesProvider.notifier);
+                    if (!st.selectionMode) n.toggleSelectionMode();
+                    n.toggleSelect(loc.code);
+                  },
                   onTap: () => _showDetail(loc),
                   onEdit: () => _showEditDialog(loc),
                   onDelete: () => _confirmDelete(loc),
@@ -312,11 +349,19 @@ class _MiniCard extends StatelessWidget {
 
 class _LocaliteCard extends StatelessWidget {
   final Localite loc;
+  final bool selectionMode;
+  final bool isSelected;
+  final VoidCallback onToggleSelect;
+  final VoidCallback onLongPress;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   const _LocaliteCard({
     required this.loc,
+    this.selectionMode = false,
+    this.isSelected = false,
+    required this.onToggleSelect,
+    required this.onLongPress,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -327,16 +372,24 @@ class _LocaliteCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isSelected
+            ? SigsTheme.primaryOrange.withValues(alpha: 0.06)
+            : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isSelected
+              ? SigsTheme.primaryOrange
+              : Colors.grey.shade200,
+          width: isSelected ? 1.5 : 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
+          onTap: selectionMode ? onToggleSelect : onTap,
+          onLongPress: selectionMode ? null : onLongPress,
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -344,6 +397,21 @@ class _LocaliteCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    if (selectionMode)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: Checkbox(
+                            value: isSelected,
+                            onChanged: (_) => onToggleSelect(),
+                            activeColor: SigsTheme.primaryOrange,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ),
                     Container(
                       width: 34,
                       height: 34,
@@ -424,23 +492,25 @@ class _LocaliteCard extends StatelessWidget {
                         ),
                       ),
                     const Spacer(),
-                    _ActionBtn(
-                      icon: Icons.visibility_outlined,
-                      color: Colors.grey.shade600,
-                      onTap: onTap,
-                    ),
-                    const SizedBox(width: 4),
-                    _ActionBtn(
-                      icon: Icons.edit_outlined,
-                      color: SigsTheme.primaryBlue,
-                      onTap: onEdit,
-                    ),
-                    const SizedBox(width: 4),
-                    _ActionBtn(
-                      icon: Icons.delete_outline,
-                      color: Colors.red.shade600,
-                      onTap: onDelete,
-                    ),
+                    if (!selectionMode) ...[
+                      _ActionBtn(
+                        icon: Icons.visibility_outlined,
+                        color: Colors.grey.shade600,
+                        onTap: onTap,
+                      ),
+                      const SizedBox(width: 4),
+                      _ActionBtn(
+                        icon: Icons.edit_outlined,
+                        color: SigsTheme.primaryBlue,
+                        onTap: onEdit,
+                      ),
+                      const SizedBox(width: 4),
+                      _ActionBtn(
+                        icon: Icons.delete_outline,
+                        color: Colors.red.shade600,
+                        onTap: onDelete,
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -449,6 +519,132 @@ class _LocaliteCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _LocaliteSelectionBar extends StatelessWidget {
+  final LocalitesState state;
+  final WidgetRef ref;
+  final BuildContext parentContext;
+  const _LocaliteSelectionBar({
+    required this.state,
+    required this.ref,
+    required this.parentContext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final count = state.selectedCodes.length;
+    final allSelected = state.records.isNotEmpty &&
+        state.selectedCodes.length == state.records.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: SigsTheme.primaryBlue,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Checkbox(
+                  value: allSelected,
+                  onChanged: (_) {
+                    final n = ref.read(localitesProvider.notifier);
+                    allSelected ? n.deselectAll() : n.selectAll();
+                  },
+                  activeColor: SigsTheme.primaryOrange,
+                  side: const BorderSide(color: Colors.white54),
+                ),
+                Expanded(
+                  child: Text(
+                    count == 0
+                        ? 'Cochez les localités'
+                        : '$count sélectionné${count > 1 ? 's' : ''}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (count > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Material(
+                    color: SigsTheme.dangerRed.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      onTap: () => _doBulkDelete(context),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.delete_outline_rounded,
+                                color: SigsTheme.dangerRed, size: 20),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Supprimer ($count)',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: SigsTheme.dangerRed,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _doBulkDelete(BuildContext ctx) async {
+    final count = state.selectedCodes.length;
+    final confirmed = await showDialog<bool>(
+      context: parentContext,
+      builder: (c) => AlertDialog(
+        title: const Text('Suppression en masse'),
+        content: Text(
+            'Voulez-vous supprimer $count localité(s) ? Cette action est irréversible.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Annuler')),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            style:
+                FilledButton.styleFrom(backgroundColor: SigsTheme.dangerRed),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !parentContext.mounted) return;
+    HapticFeedback.heavyImpact();
+    final err = await ref.read(localitesProvider.notifier).bulkDelete();
+    if (!parentContext.mounted) return;
+    ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
+      content: Text(err ?? '$count localité(s) supprimée(s)'),
+      backgroundColor:
+          err == null ? SigsTheme.successGreen : Colors.red.shade600,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ));
   }
 }
 

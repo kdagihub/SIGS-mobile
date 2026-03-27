@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -43,68 +42,6 @@ class _DepartementsTabState extends ConsumerState<DepartementsTab>
     ref.read(departementsProvider.notifier).load(search: val);
   }
 
-  // ─── CRUD dialogs ───────────────────────────────────────────
-
-  void _showCreateDialog() {
-    _showDepartementForm(context, ref, null);
-  }
-
-  void _showEditDialog(Departement dd) {
-    _showDepartementForm(context, ref, dd);
-  }
-
-  Future<void> _confirmDelete(Departement dd) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Supprimer', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-        content: Text(
-          'Supprimer la direction départementale « ${dd.libelleDd} » ?',
-          style: GoogleFonts.inter(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Annuler', style: GoogleFonts.inter(color: Colors.grey)),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true || !mounted) return;
-    final err = await ref.read(departementsProvider.notifier).delete(dd.code);
-    if (!mounted) return;
-    _showSnack(err == null ? 'Supprimé avec succès' : err, err != null);
-  }
-
-  Future<void> _toggleActive(Departement dd) async {
-    HapticFeedback.lightImpact();
-    final err = await ref.read(departementsProvider.notifier).toggleActive(dd);
-    if (!mounted) return;
-    if (err == null) {
-      _showSnack(
-        dd.isActive ? 'Désactivée' : 'Activée',
-        false,
-      );
-    } else {
-      _showSnack(err, true);
-    }
-  }
-
-  void _showSnack(String msg, bool isError) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: isError ? Colors.red.shade600 : SigsTheme.successGreen,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
-  }
-
   // ─── Build ──────────────────────────────────────────────────
 
   @override
@@ -122,20 +59,13 @@ class _DepartementsTabState extends ConsumerState<DepartementsTab>
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
           // ── Header ──
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Directions Départementales',
-                  style: GoogleFonts.inter(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: SigsTheme.primaryBlue,
-                  ),
-                ),
-              ),
-              _AddButton(onPressed: _showCreateDialog),
-            ],
+          Text(
+            'Directions Départementales',
+            style: GoogleFonts.inter(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: SigsTheme.primaryBlue,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -157,12 +87,7 @@ class _DepartementsTabState extends ConsumerState<DepartementsTab>
           else if (st.records.isEmpty)
             _EmptyState(message: st.error ?? 'Aucune direction départementale.')
           else
-            ...st.records.map((dd) => _DepartementCard(
-                  dd: dd,
-                  onEdit: () => _showEditDialog(dd),
-                  onDelete: () => _confirmDelete(dd),
-                  onToggle: () => _toggleActive(dd),
-                )),
+            ...st.records.map((dd) => _DepartementCard(dd: dd)),
 
           if (st.totalRecords > 25) ...[
             const SizedBox(height: 12),
@@ -190,28 +115,6 @@ class _DepartementsTabState extends ConsumerState<DepartementsTab>
 // ═══════════════════════════════════════════════════════════════
 // Reusable widgets
 // ═══════════════════════════════════════════════════════════════
-
-class _AddButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  const _AddButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      child: FilledButton.icon(
-        onPressed: onPressed,
-        icon: const Icon(Icons.add, size: 18),
-        label: Text('Ajouter', style: GoogleFonts.inter(fontSize: 13)),
-        style: FilledButton.styleFrom(
-          backgroundColor: SigsTheme.primaryOrange,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-        ),
-      ),
-    );
-  }
-}
 
 class _StatsRow extends StatelessWidget {
   final DepartementStats stats;
@@ -358,133 +261,90 @@ class _SearchField extends StatelessWidget {
 
 class _DepartementCard extends StatelessWidget {
   final Departement dd;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-  final VoidCallback onToggle;
-  const _DepartementCard({
-    required this.dd,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onToggle,
-  });
+  const _DepartementCard({required this.dd});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onEdit,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  dd.libelleDd,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: SigsTheme.primaryBlue,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _StatusChip(isActive: dd.isActive),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            dd.code,
+            style: GoogleFonts.robotoMono(
+              fontSize: 11,
+              color: Colors.grey.shade500,
+            ),
+          ),
+          if (dd.responsableDd != null && dd.responsableDd!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        dd.libelleDd,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: SigsTheme.primaryBlue,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _StatusChip(isActive: dd.isActive),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  dd.code,
-                  style: GoogleFonts.robotoMono(
-                    fontSize: 11,
-                    color: Colors.grey.shade500,
+                Icon(Icons.person_outline, size: 13, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    dd.responsableDd!,
+                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                if (dd.responsableDd != null && dd.responsableDd!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.person_outline, size: 13, color: Colors.grey.shade400),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          dd.responsableDd!,
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                if (dd.contactDd != null && dd.contactDd!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Icon(Icons.phone_outlined, size: 13, color: Colors.grey.shade400),
-                      const SizedBox(width: 4),
-                      Text(
-                        dd.contactDd!,
-                        style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    if (dd.coordonneesGps != null && dd.coordonneesGps!.isNotEmpty)
-                      _GpsTag(value: dd.coordonneesGps!)
-                    else
-                      Text(
-                        'GPS non renseigné',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                    const Spacer(),
-                    _ActionIcon(
-                      icon: dd.isActive ? Icons.block : Icons.check_circle_outline,
-                      color: dd.isActive ? Colors.orange.shade700 : Colors.green.shade700,
-                      tooltip: dd.isActive ? 'Désactiver' : 'Activer',
-                      onTap: onToggle,
-                    ),
-                    const SizedBox(width: 4),
-                    _ActionIcon(
-                      icon: Icons.edit_outlined,
-                      color: SigsTheme.primaryBlue,
-                      tooltip: 'Modifier',
-                      onTap: onEdit,
-                    ),
-                    const SizedBox(width: 4),
-                    _ActionIcon(
-                      icon: Icons.delete_outline,
-                      color: Colors.red.shade600,
-                      tooltip: 'Supprimer',
-                      onTap: onDelete,
-                    ),
-                  ],
                 ),
               ],
             ),
-          ),
-        ),
+          ],
+          if (dd.contactDd != null && dd.contactDd!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(Icons.phone_outlined, size: 13, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text(
+                  dd.contactDd!,
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 10),
+          if (dd.coordonneesGps != null && dd.coordonneesGps!.isNotEmpty)
+            _GpsTag(value: dd.coordonneesGps!)
+          else
+            Text(
+              'GPS non renseigné',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey.shade400,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -541,39 +401,6 @@ class _GpsTag extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ActionIcon extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String tooltip;
-  final VoidCallback onTap;
-  const _ActionIcon({
-    required this.icon,
-    required this.color,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: color.withValues(alpha: 0.08),
-          ),
-          child: Icon(icon, size: 16, color: color),
-        ),
       ),
     );
   }
@@ -660,227 +487,3 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Create / Edit form dialog (bottom sheet)
-// ═══════════════════════════════════════════════════════════════
-
-void _showDepartementForm(
-    BuildContext context, WidgetRef ref, Departement? existing) {
-  final isEdit = existing != null;
-  final libelleCtrl = TextEditingController(text: existing?.libelleDd ?? '');
-  final responsableCtrl =
-      TextEditingController(text: existing?.responsableDd ?? '');
-  final contactCtrl = TextEditingController(text: existing?.contactDd ?? '');
-  final emailCtrl = TextEditingController(text: existing?.emailDd ?? '');
-  final gpsCtrl = TextEditingController(text: existing?.coordonneesGps ?? '');
-  bool isActive = existing?.isActive ?? true;
-  bool saving = false;
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setSheetState) {
-        Future<void> save() async {
-          final libelle = libelleCtrl.text.trim();
-          if (libelle.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Le libellé est requis'),
-              backgroundColor: Colors.red,
-            ));
-            return;
-          }
-          setSheetState(() => saving = true);
-          final data = {
-            'libelle_dd': libelle,
-            'responsable_dd': responsableCtrl.text.trim(),
-            'contact_dd': contactCtrl.text.trim(),
-            'email_dd': emailCtrl.text.trim(),
-            'coordonnees_gps': gpsCtrl.text.trim(),
-            'is_active': isActive,
-          };
-          final notifier = ref.read(departementsProvider.notifier);
-          final err = isEdit
-              ? await notifier.update(existing.code, data)
-              : await notifier.create(data);
-
-          if (!ctx.mounted) return;
-          setSheetState(() => saving = false);
-
-          if (err == null) {
-            Navigator.pop(ctx);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(isEdit ? 'Modifié avec succès' : 'Créé avec succès'),
-              backgroundColor: SigsTheme.successGreen,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ));
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(err),
-              backgroundColor: Colors.red.shade600,
-            ));
-          }
-        }
-
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  isEdit ? 'Modifier la DD' : 'Nouvelle Direction Départementale',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: SigsTheme.primaryBlue,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _FormField(label: 'Libellé *', controller: libelleCtrl),
-                _FormField(label: 'Responsable', controller: responsableCtrl),
-                _FormField(label: 'Contact', controller: contactCtrl, keyboard: TextInputType.phone),
-                _FormField(label: 'Email', controller: emailCtrl, keyboard: TextInputType.emailAddress),
-                _FormField(label: 'Coordonnées GPS', controller: gpsCtrl, hint: 'latitude,longitude'),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text('Statut', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade600)),
-                    const Spacer(),
-                    ChoiceChip(
-                      label: const Text('Actif'),
-                      selected: isActive,
-                      onSelected: (_) => setSheetState(() => isActive = true),
-                      selectedColor: const Color(0xFFDCFCE7),
-                      labelStyle: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isActive ? const Color(0xFF16A34A) : Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('Inactif'),
-                      selected: !isActive,
-                      onSelected: (_) => setSheetState(() => isActive = false),
-                      selectedColor: const Color(0xFFFEE2E2),
-                      labelStyle: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: !isActive ? const Color(0xFFDC2626) : Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton(
-                    onPressed: saving ? null : save,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: SigsTheme.primaryOrange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: saving
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            'Enregistrer',
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ),
-  );
-}
-
-class _FormField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final TextInputType? keyboard;
-  final String? hint;
-  const _FormField({
-    required this.label,
-    required this.controller,
-    this.keyboard,
-    this.hint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 5),
-          TextField(
-            controller: controller,
-            keyboardType: keyboard,
-            style: GoogleFonts.inter(fontSize: 14),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade400),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: SigsTheme.primaryOrange, width: 1.5),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

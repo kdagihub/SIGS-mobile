@@ -99,7 +99,7 @@ class _GenericPlaceholder extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Bonjour,',
+                              'Bienvenue,',
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 color: Colors.white.withValues(alpha: 0.7),
